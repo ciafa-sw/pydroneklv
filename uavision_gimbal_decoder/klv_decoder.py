@@ -1,6 +1,6 @@
-import datetime
-import struct
 
+from typing import Optional, Callable, Dict
+from .decoders import *
 # check is there are enough bytes for a minimum packet =
 # universal key   16 bytes
 # size bytes       2 bytes
@@ -14,83 +14,72 @@ MINIMUM_PACKET_SIZE = 16 + 2 + 10 + 4
 ukey_hex = "060E2B34020B01010E01030101000000"
 bukey = bytearray.fromhex(ukey_hex)
 
-
-def decodeTimeStamp(buf):
-    """
-    // unix timestamp
-                    var buffer = [];
-                    for (var i = 0; i < length; i++) {
-                        buffer.push((this.bits.read(8)).toString(16)); // Read one byte at a time
-                    }
-                    var unix_timestamp = bigInt(buffer.join(''), 16).toString();
-                    return new Date(unix_timestamp / 1000); // Convert from microseconds to milliseconds, and return
-    """
-    uInt64 = struct.unpack(">Q", buf)[0]
-    dt = datetime.datetime.fromtimestamp(uInt64 / 1000000)  # convert µs to seconds
-    return dt
-
-
-def decodePlatformHeadingAngle(buf):
-    int16 = struct.unpack(">h", buf)[0]
-    return (360 / 65535) * int16
-
-
-def decodePlatformPitchAngle(buf):
-    int16 = struct.unpack(">h", buf)[0]
-    return (40 / 65534) * int16
+class PacketTypeData:
+    def __init__(self,
+                 tag: int,
+                 description: str,
+                 decode_func: Optional[Callable] = None,
+                 min_val: Optional[float] = None,
+                 max_val: Optional[float] = None,
+                 negative_input_value: Optional[bool] = False,
+                 exact_input_size: Optional[int] = None,
+                 min_input_size: Optional[int] = None,
+                 max_input_size: Optional[int] = None):
+        # min_val, max_val, negative_input_value, exact_input_size have to be offered together
+        self.tag = tag
+        self.description = description
+        self.decode_func = decode_func
+        self.min_val = min_val
+        self.max_val = max_val
+        self.negative_input_value = negative_input_value
+        self.exact_input_size = exact_input_size
+        self.min_input_size = min_input_size
+        self.max_input_size = max_input_size
 
 
-def decodePlatformRollAngle(buf):
-    int16 = struct.unpack(">h", buf)[0]
-    return (100 / 65534) * int16
+klv_types_data: Dict[int, PacketTypeData] = {}
+
+def add_klv_type(tag: int,
+                 description: str,
+                 decode_func: Optional[Callable] = None,
+                 min_val: Optional[float] = None,
+                 max_val: Optional[float] = None,
+                 negative_input_value: Optional[bool] = None,
+                 exact_input_size: Optional[int] = None,
+                 min_input_size: Optional[int] = None,
+                 max_input_size: Optional[int] = None):
+    packet_data = PacketTypeData(tag=tag,
+                                 description=description,
+                                 decode_func=decode_func,
+                                 min_val=min_val,
+                                 max_val=max_val,
+                                 negative_input_value=negative_input_value,
+                                 exact_input_size=exact_input_size,
+                                 min_input_size=min_input_size,
+                                 max_input_size=max_input_size
+                                 )
+    klv_types_data[tag] = packet_data
+    return packet_data
 
 
-def decodeString(buf):
-    return buf.decode("ascii")
-
-
-def decodeLatitude(buf):
-    int32 = struct.unpack(">i", buf)[0]
-    return 180 / 0xFFFFFFFE * int32
-
-
-def decodeLongitude(buf):
-    int32 = struct.unpack(">i", buf)[0]
-    return 360 / 0xFFFFFFFE * int32
-
-
-def decodeAltitude(buf: bytes) -> float:
-    if len(buf) != 2:
-        raise Exception('altitude is 2 bytes')
-    uInt16 = struct.unpack(">H", buf)[0]
-    return 19900 / 0xFFFF * uInt16 - 900
-
-
-def decodeSensorFOV(buf):
-    # same convertion calculation for horizontal and vertical
-    uInt16 = struct.unpack(">H", buf)[0]
-    return 180 / 0xFFFF * uInt16
-
-
-def decodeSensorRelAngle(buf):
-    # same convertion calculation for azimuth, elevation and roll
-    uInt32 = struct.unpack(">I", buf)[0]
-    return 360 / 0xFFFFFFFF * uInt32
-
-
-def decodeSlantRange(buf):
-    uInt32 = struct.unpack(">I", buf)[0]
-    return 5000000 / 0xFFFFFFFF * uInt32
-
-
-def decodeTargetWidth(buf):
-    uInt16 = struct.unpack(">H", buf)[0]
-    return 10000 / 0xFFFF * uInt16
-
-
-def decodeUasLdsVersion(buf):
-    return struct.unpack(">B", buf)[0]
-
+add_klv_type(1, "Checksum")
+add_klv_type(2, "UNIX Time Stamp", decodeTimeStamp, exact_input_size=8)
+add_klv_type(3, "Mission ID", max_input_size=127)
+add_klv_type(4, "Platform Tail Number", max_input_size=127)
+add_klv_type(5, "Platform Heading Angle", decodePlatformHeadingAngle,
+             min_val=0.0,
+             max_val=360.0,
+             exact_input_size=2)
+add_klv_type(6, "Platform Pitch Angle", decodePlatformPitchAngle,
+             min_val=-20.0,
+             max_val=+20.0,
+             negative_input_value=True,
+             exact_input_size=2)
+add_klv_type(7, "Platform Roll Angle", decodePlatformRollAngle,
+             min_val=-50.0,
+             max_val=+50.0,
+             negative_input_value=True,
+             exact_input_size=2)
 
 klv_types = {1: ("Checksum", None),
              2: ("UNIX Time Stamp", decodeTimeStamp),
@@ -124,57 +113,21 @@ klv_types = {1: ("Checksum", None),
              31: ("Offset Corner Longitude Point 3", None),
              32: ("Offset Corner Latitude Point 4", None),
              33: ("Offset Corner Longitude Point 4", None),
-
              40: ("Target Location Latitude", decodeLatitude),
              41: ("Target Location Longitude", decodeLongitude),
              42: ("Target Location Elevation", decodeAltitude),
              43: ("Target Track Gate Width", None),
              44: ("Target Track Gate Height", None),
-
              48: ("Security Local Metadata Set", None),
-
              65: ("UAS LDS version", decodeUasLdsVersion),
-
              74: ("VMTI Data SetConversion", None),
-
              94: ("MIIS Core Identifier", None),
              }
 
 
-def checksum(packet):
-    i = 0
-    cs = 0
-    while i < len(packet) - 2:
-        cs += (packet[i] << (8 * ((i + 1) % 2)))
-        cs = cs % (2 ** 16)
-        i += 1
-
-    return cs == (packet[-2] << 8 + packet[-1])
 
 
-def computeCrc(buf):
-    crc = 0
-    for i, b in enumerate(buf):
-        crc += b << (8 * ((i + 1) % 2))
-    return crc & 0xffff
-
-
-def verifyCrc_old(p):
-    packetCrc = (p[-2] << 8) + p[-1]
-    computedCrc = computeCrc(p[:-2])
-    return packetCrc == computedCrc
-
-
-def verifyCrc(p, startIndex, size):
-    packetCrc = (p[size - 2] << 8) + p[size - 1]
-    computedCrc = computeCrc(p[startIndex:size - 2])
-    return packetCrc == computedCrc
-
-
-
-
-
-def decodePacket(buf, startIndex=0):
+def decodePacket(buf: bytes, startIndex: int = 0) -> dict:
     # check minimum size packet
     nBytesFromStart = len(buf) - startIndex
     if nBytesFromStart < MINIMUM_PACKET_SIZE:
