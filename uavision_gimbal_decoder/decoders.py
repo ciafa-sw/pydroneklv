@@ -73,9 +73,15 @@ def decodeSensorFOV(buf):
 
 def decodeSensorRelAngle(buf):
     # same convertion calculation for azimuth, elevation and roll
+    raiseLenError(buf, 4)
     uInt32 = struct.unpack(">I", buf)[0]
     return 360 / 0xFFFFFFFF * uInt32
 
+def decodeSensorRelElevationAngle(buf):
+    # same convertion calculation for azimuth, elevation and roll
+    raiseLenError(buf, 4)
+    uInt32 = struct.unpack(">i", buf)[0]
+    return 360 / 0xFFFFFFFE * uInt32
 
 def decodeSlantRange(buf):
     uInt32 = struct.unpack(">I", buf)[0]

@@ -24,7 +24,7 @@ class PacketTypeData:
                  max_input_val: Optional[float] = None,
                  min_output_val: Optional[float] = None,
                  max_output_val: Optional[float] = None,
-                 negative_input_value: Optional[bool] = False,
+                 example_input_output_values: Optional[tuple] = None,
                  exact_input_size: Optional[int] = None,
                  min_input_size: Optional[int] = None,
                  max_input_size: Optional[int] = None):
@@ -37,7 +37,7 @@ class PacketTypeData:
         self.max_input_val = max_input_val
         self.min_output_val = min_output_val
         self.max_output_val = max_output_val
-        self.negative_input_value = negative_input_value
+        self.example_input_output_values=example_input_output_values
         self.exact_input_size = exact_input_size
         self.min_input_size = min_input_size
         self.max_input_size = max_input_size
@@ -53,7 +53,7 @@ def add_klv_type(tag: int,
                  max_input_val: Optional[float] = None,
                  min_output_val: Optional[float] = None,
                  max_output_val: Optional[float] = None,
-                 negative_input_value: Optional[bool] = None,
+                 example_input_output_values: Optional[tuple] = None,
                  exact_input_size: Optional[int] = None,
                  min_input_size: Optional[int] = None,
                  max_input_size: Optional[int] = None):
@@ -65,7 +65,7 @@ def add_klv_type(tag: int,
                                  max_input_val=max_input_val,
                                  min_output_val=min_output_val,
                                  max_output_val=max_output_val,
-                                 negative_input_value=negative_input_value,
+                                 example_input_output_values=example_input_output_values,
                                  exact_input_size=exact_input_size,
                                  min_input_size=min_input_size,
                                  max_input_size=max_input_size
@@ -75,9 +75,13 @@ def add_klv_type(tag: int,
 
 
 add_klv_type(1, "Checksum")
+
 add_klv_type(2, "UNIX Time Stamp", decodeTimeStamp, exact_input_size=8)
+
 add_klv_type(3, "Mission ID", max_input_size=127)
+
 add_klv_type(4, "Platform Tail Number", max_input_size=127)
+
 add_klv_type(5, "Platform Heading Angle", decodePlatformHeadingAngle,
              input_type='uint16',
              min_input_val=0,
@@ -85,6 +89,7 @@ add_klv_type(5, "Platform Heading Angle", decodePlatformHeadingAngle,
              min_output_val=0.0,
              max_output_val=360.0,
              exact_input_size=2)
+
 add_klv_type(6, "Platform Pitch Angle", decodePlatformPitchAngle,
              input_type='int16',
              min_input_val=-(2 ** 15 - 1),
@@ -92,6 +97,7 @@ add_klv_type(6, "Platform Pitch Angle", decodePlatformPitchAngle,
              min_output_val=-20.0,
              max_output_val=+20.0,
              exact_input_size=2)
+
 add_klv_type(7, "Platform Roll Angle", decodePlatformRollAngle,
              input_type='int16',
              min_input_val=-(2 ** 15 - 1),
@@ -99,6 +105,7 @@ add_klv_type(7, "Platform Roll Angle", decodePlatformRollAngle,
              min_output_val=-50.0,
              max_output_val=+50.0,
              exact_input_size=2)
+
 add_klv_type(13, "Sensor latitude", decodeLatitude,
              input_type='int32',
              min_input_val=-(2 ** 31 - 1),
@@ -106,6 +113,7 @@ add_klv_type(13, "Sensor latitude", decodeLatitude,
              min_output_val=-90.0,
              max_output_val=+90.0,
              exact_input_size=4)
+
 add_klv_type(14, "Sensor longitude", decodeLongitude,
              input_type = 'int32',
              min_input_val = -(2 ** 31 - 1),
@@ -113,6 +121,7 @@ add_klv_type(14, "Sensor longitude", decodeLongitude,
              min_output_val = -180.0,
              max_output_val = +180.0,
              exact_input_size = 4)
+
 add_klv_type(15, "Sensor true altitude", decodeAltitude,
              input_type='uint16',
              min_input_val = 0,
@@ -121,6 +130,50 @@ add_klv_type(15, "Sensor true altitude", decodeAltitude,
              max_output_val = +19000.0,
              exact_input_size = 2)
 
+add_klv_type(16, "Sensor Horizontal field of View", decodeSensorFOV,
+             input_type='uint16',
+             min_input_val=0,
+             max_input_val=2 ** 16 - 1,
+             min_output_val=0.0,
+             max_output_val=180.0,
+             example_input_output_values=('CD9C', 144.5713),
+             exact_input_size=2)
+
+add_klv_type(17, "Sensor Vertical field of View", decodeSensorFOV,
+             input_type='uint16',
+             min_input_val=0,
+             max_input_val=2 ** 16 - 1,
+             min_output_val=0.0,
+             max_output_val=180.0,
+             example_input_output_values=('D917', 152.6436),
+             exact_input_size=2)
+
+add_klv_type(18, "Sensor Relative Azimuth Angle", decodeSensorRelAngle,
+             input_type='uint32',
+             min_input_val=0,
+             max_input_val=2 ** 32 - 1,
+             min_output_val=0.0,
+             max_output_val=360.0,
+             example_input_output_values=('724A0A20', 160.719211474396),
+             exact_input_size=4)
+
+add_klv_type(19, " Sensor Relative Elevation Angle", decodeSensorRelElevationAngle,
+             input_type='int32',
+             min_input_val=-(2 ** 31 - 1),
+             max_input_val=2 ** 31 - 1,
+             min_output_val=-180.0,
+             max_output_val=180.0,
+             example_input_output_values=('87F84B86', -168.792324833941),
+             exact_input_size=4)
+
+add_klv_type(20, "Sensor Relative Roll Angle", decodeSensorRelAngle,
+             input_type='uint32',
+             min_input_val=0,
+             max_input_val=2 ** 32 - 1,
+             min_output_val=0.0,
+             max_output_val=360.0,
+             example_input_output_values=('7DC55ECE', 176.865437690572),
+             exact_input_size=4)
 
 klv_types = {1: ("Checksum", None),
              2: ("UNIX Time Stamp", decodeTimeStamp),
@@ -164,8 +217,6 @@ klv_types = {1: ("Checksum", None),
              74: ("VMTI Data SetConversion", None),
              94: ("MIIS Core Identifier", None),
              }
-
-
 
 
 def decodePacket(buf: bytes, startIndex: int = 0) -> dict:
