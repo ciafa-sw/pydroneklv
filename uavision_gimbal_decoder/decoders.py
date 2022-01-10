@@ -1,6 +1,7 @@
 import datetime
 import struct
 
+
 def raiseLenError(payload, correct_length):
     if len(payload) != correct_length:
         raise Exception(f'size of payload should be {correct_length} bytes, but got {len(payload)}')
@@ -77,6 +78,7 @@ def decodeSensorRelAngle(buf):
     uInt32 = struct.unpack(">I", buf)[0]
     return 360 / 0xFFFFFFFF * uInt32
 
+
 def decodeSensorRelElevationAngle(buf):
     # same convertion calculation for azimuth, elevation and roll
     raiseLenError(buf, 4)
@@ -95,9 +97,6 @@ def decodeTargetWidth(buf: bytes) -> object:
 
 def decodeUasLdsVersion(buf):
     return struct.unpack(">B", buf)[0]
-
-
-
 
 
 def checksum(packet):

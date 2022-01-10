@@ -1,6 +1,6 @@
 # module to connect to a MPEG-TS stream and decode KLV packets from a KLV stream
 import av
-from .packet_decoder import decodePacket
+from .packet_decoder import decode_packet
 
 
 def decode_from_ts_stream(stream_path: str) -> None:
@@ -13,6 +13,8 @@ def decode_from_ts_stream(stream_path: str) -> None:
             # We need to skip the "flushing" packets that `demux` generates.
             if packet.dts is None:
                 continue
-
-            decoded_packet = decodePacket(packet.to_bytes())
-            yield decoded_packet
+            try:
+                decoded_packet = decode_packet(packet.to_bytes())
+                yield decoded_packet
+            except:
+                pass

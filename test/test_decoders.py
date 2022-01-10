@@ -27,8 +27,6 @@ class MyTestCase(unittest.TestCase):
                 # input type
                 struct_format_str = '>' + struct_letters[packet_type_data.input_type]
 
-                print(packet_type_data.description, struct_format_str)
-
                 min_input_payload = struct.pack(struct_format_str, packet_type_data.min_input_val)
                 max_input_payload = struct.pack(struct_format_str, packet_type_data.max_input_val)
 
@@ -58,8 +56,12 @@ class MyTestCase(unittest.TestCase):
                 example_in, expected_out = packet_type_data.example_input_output_values
                 computed_out = packet_type_data.decode_func(bytes.fromhex(example_in))
                 with self.subTest(f"tag {tag} | {packet_type_data.description} | example"):
-                    self.assertEqual(expected_out, computed_out,
-                                     f'tag {tag} | {packet_type_data.description} | for input {example_in}, expected {expected_out} but got {computed_out}')
+                    if packet_type_data.resolution is not None:
+                        self.assertLess(abs(computed_out-expected_out), packet_type_data.resolution,
+                        f'tag {tag} | {packet_type_data.description} | for input {example_in}, difference between expected {expected_out} and computed {computed_out} is above resolution {packet_type_data.resolution}')
+                    else:
+                        self.assertEqual(expected_out, computed_out,
+                                         f'tag {tag} | {packet_type_data.description} | for input {example_in}, expected {expected_out} but got {computed_out}')
 
     def test_decode_altitude(self):
         packet_payload = bytes.fromhex('c221')

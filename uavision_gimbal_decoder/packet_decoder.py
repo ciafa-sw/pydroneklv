@@ -24,6 +24,7 @@ class PacketTypeData:
                  max_input_val: Optional[float] = None,
                  min_output_val: Optional[float] = None,
                  max_output_val: Optional[float] = None,
+                 resolution: Optional[float] = None,
                  example_input_output_values: Optional[tuple] = None,
                  exact_input_size: Optional[int] = None,
                  min_input_size: Optional[int] = None,
@@ -37,10 +38,16 @@ class PacketTypeData:
         self.max_input_val = max_input_val
         self.min_output_val = min_output_val
         self.max_output_val = max_output_val
+        self.resolution = resolution
         self.example_input_output_values=example_input_output_values
         self.exact_input_size = exact_input_size
         self.min_input_size = min_input_size
         self.max_input_size = max_input_size
+
+        if self.example_input_output_values is not None:
+            in_, out_ = self.example_input_output_values
+            self.example_input_output_values = (in_.strip().replace(' ', ''), out_)
+
 
 
 klv_types_data: Dict[int, PacketTypeData] = {}
@@ -53,6 +60,7 @@ def add_klv_type(tag: int,
                  max_input_val: Optional[float] = None,
                  min_output_val: Optional[float] = None,
                  max_output_val: Optional[float] = None,
+                 resolution: Optional[float] = None,
                  example_input_output_values: Optional[tuple] = None,
                  exact_input_size: Optional[int] = None,
                  min_input_size: Optional[int] = None,
@@ -65,6 +73,7 @@ def add_klv_type(tag: int,
                                  max_input_val=max_input_val,
                                  min_output_val=min_output_val,
                                  max_output_val=max_output_val,
+                                 resolution=resolution,
                                  example_input_output_values=example_input_output_values,
                                  exact_input_size=exact_input_size,
                                  min_input_size=min_input_size,
@@ -73,8 +82,6 @@ def add_klv_type(tag: int,
     klv_types_data[tag] = packet_data
     return packet_data
 
-
-add_klv_type(1, "Checksum")
 
 add_klv_type(2, "UNIX Time Stamp", decodeTimeStamp, exact_input_size=8)
 
@@ -88,6 +95,8 @@ add_klv_type(5, "Platform Heading Angle", decodePlatformHeadingAngle,
              max_input_val=2**16-1,
              min_output_val=0.0,
              max_output_val=360.0,
+             resolution=5.5e-3,
+             example_input_output_values=('71 C2', 159.9744),
              exact_input_size=2)
 
 add_klv_type(6, "Platform Pitch Angle", decodePlatformPitchAngle,
@@ -96,6 +105,8 @@ add_klv_type(6, "Platform Pitch Angle", decodePlatformPitchAngle,
              max_input_val=2 ** 15 - 1,
              min_output_val=-20.0,
              max_output_val=+20.0,
+             resolution=610-6,
+             example_input_output_values=('FD 3D', -0.4315251),
              exact_input_size=2)
 
 add_klv_type(7, "Platform Roll Angle", decodePlatformRollAngle,
@@ -104,6 +115,8 @@ add_klv_type(7, "Platform Roll Angle", decodePlatformRollAngle,
              max_input_val=2 ** 15 - 1,
              min_output_val=-50.0,
              max_output_val=+50.0,
+             resolution=1525e-6,
+             example_input_output_values=('08 B8', 3.405814),
              exact_input_size=2)
 
 add_klv_type(13, "Sensor latitude", decodeLatitude,
@@ -112,6 +125,8 @@ add_klv_type(13, "Sensor latitude", decodeLatitude,
              max_input_val=2 ** 31 - 1,
              min_output_val=-90.0,
              max_output_val=+90.0,
+             resolution=42e-9,
+             example_input_output_values=('55 95 B6 6D', 60.1768229669783),
              exact_input_size=4)
 
 add_klv_type(14, "Sensor longitude", decodeLongitude,
@@ -120,6 +135,8 @@ add_klv_type(14, "Sensor longitude", decodeLongitude,
              max_input_val = 2 ** 31 - 1,
              min_output_val = -180.0,
              max_output_val = +180.0,
+             resolution=84e-9,
+             example_input_output_values=('5B5360C4', 128.426759042045),
              exact_input_size = 4)
 
 add_klv_type(15, "Sensor true altitude", decodeAltitude,
@@ -128,6 +145,8 @@ add_klv_type(15, "Sensor true altitude", decodeAltitude,
              max_input_val = 2 ** 16 - 1,
              min_output_val = -900.0,
              max_output_val = +19000.0,
+             resolution=0.3,
+             example_input_output_values=('C221', 14190.72),
              exact_input_size = 2)
 
 add_klv_type(16, "Sensor Horizontal field of View", decodeSensorFOV,
@@ -136,6 +155,7 @@ add_klv_type(16, "Sensor Horizontal field of View", decodeSensorFOV,
              max_input_val=2 ** 16 - 1,
              min_output_val=0.0,
              max_output_val=180.0,
+             resolution=2.7e-3,
              example_input_output_values=('CD9C', 144.5713),
              exact_input_size=2)
 
@@ -145,6 +165,7 @@ add_klv_type(17, "Sensor Vertical field of View", decodeSensorFOV,
              max_input_val=2 ** 16 - 1,
              min_output_val=0.0,
              max_output_val=180.0,
+             resolution=2.7e-3,
              example_input_output_values=('D917', 152.6436),
              exact_input_size=2)
 
@@ -154,6 +175,7 @@ add_klv_type(18, "Sensor Relative Azimuth Angle", decodeSensorRelAngle,
              max_input_val=2 ** 32 - 1,
              min_output_val=0.0,
              max_output_val=360.0,
+             resolution=84e-9,
              example_input_output_values=('724A0A20', 160.719211474396),
              exact_input_size=4)
 
@@ -163,6 +185,7 @@ add_klv_type(19, " Sensor Relative Elevation Angle", decodeSensorRelElevationAng
              max_input_val=2 ** 31 - 1,
              min_output_val=-180.0,
              max_output_val=180.0,
+             resolution=84e-9,
              example_input_output_values=('87F84B86', -168.792324833941),
              exact_input_size=4)
 
@@ -172,28 +195,16 @@ add_klv_type(20, "Sensor Relative Roll Angle", decodeSensorRelAngle,
              max_input_val=2 ** 32 - 1,
              min_output_val=0.0,
              max_output_val=360.0,
+             resolution=84e-9,
              example_input_output_values=('7DC55ECE', 176.865437690572),
              exact_input_size=4)
 
 klv_types = {1: ("Checksum", None),
-             2: ("UNIX Time Stamp", decodeTimeStamp),
              3: ("Mission ID", None),
              4: ("Platform Tail Number", None),
-             5: ("Platform heading angle", decodePlatformHeadingAngle),
-             6: ("Platform pitch angle", decodePlatformPitchAngle),
-             7: ("Platform roll angle", decodePlatformRollAngle),
-
              10: ("Platform Designation", decodeString),
              11: ("Image Source Sensor", decodeString),
              12: ("Image Coordinate System", decodeString),
-             13: ("Sensor latitude", decodeLatitude),
-             14: ("Sensor longitude", decodeLongitude),
-             15: ("Sensor true altitude", decodeAltitude),
-             16: ("Sensor horizontal FOV", decodeSensorFOV),
-             17: ("Sensor vertical FOV", decodeSensorFOV),
-             18: ("Sensor Rel. Azimuth angle", decodeSensorRelAngle),
-             19: ("Sensor Rel. Elevation angle", decodeSensorRelAngle),
-             20: ("Sensor Rel. Roll angle", decodeSensorRelAngle),
              21: ("Slant range", decodeSlantRange),
              22: ("Target width", decodeTargetWidth),
              23: ("Frame center latitude", decodeLatitude),
@@ -219,7 +230,7 @@ klv_types = {1: ("Checksum", None),
              }
 
 
-def decodePacket(buf: bytes, startIndex: int = 0) -> dict:
+def decode_packet(buf: bytes, startIndex: int = 0) -> dict:
     # check minimum size packet
     nBytesFromStart = len(buf) - startIndex
     if nBytesFromStart < MINIMUM_PACKET_SIZE:
@@ -269,13 +280,19 @@ def decodePacket(buf: bytes, startIndex: int = 0) -> dict:
         tag_len = buf[i + j + 1]
         tag_payload = buf[i + j + 2:i + j + 2 + tag_len]
 
-        tag_stuff = klv_types.get(tag, ("unknown", None))
-        tag_description, decodingFunc = tag_stuff
-
-        if decodingFunc:
-            decodedValue = decodingFunc(tag_payload)
+        if tag in klv_types_data:
+            type_data = klv_types_data[tag]
+            tag_description = type_data.description
+            decode_func = type_data.decode_func
+        elif tag in klv_types:
+            tag_description, decode_func = klv_types[tag]
         else:
-            decodedValue = tag_payload
-        packet[tag] = (tag_description, tag_len, tag_payload, decodedValue)
+            tag_description, decode_func = ("unknown", None)
+
+        if decode_func:
+            decoded_value = decode_func(tag_payload)
+        else:
+            decoded_value = tag_payload
+        packet[tag] = (tag_description, tag_len, tag_payload, decoded_value)
         j += 2 + tag_len
     return packet
