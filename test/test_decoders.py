@@ -1,7 +1,7 @@
 import unittest
 import struct
-from uavision_gimbal_decoder.packet_decoder import klv_types_data
-import uavision_gimbal_decoder.decoders as decoders
+from pydroneklv.packet_decoder import klv_types_data
+import pydroneklv.decoders as decoders
 
 struct_letters =\
     {'uint8': 'B',
