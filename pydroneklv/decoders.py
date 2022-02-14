@@ -127,10 +127,10 @@ def verifyCrc_old(p):
     return packetCrc == computedCrc
 
 
-def verify_crc(p: bytes, startIndex: int, size: int) -> bool:
-    packetCrc = (p[size - 2] << 8) + p[size - 1]
-    computedCrc = computeCrc(p[startIndex:size - 2])
-    return packetCrc == computedCrc
+def verify_crc(p: bytes, start_idx: int, size: int) -> bool:
+    pkt_crc = (p[size - 2] << 8) + p[size - 1]
+    computed_crc = computeCrc(p[start_idx:size - 2])
+    return pkt_crc == computed_crc
 
 
 def decode_passthrough(buf: bytes) -> bytes:
