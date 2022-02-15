@@ -3,11 +3,9 @@ import unittest
 from pydroneklv.packet_decoder import decode_packet
 import pydroneklv.decoder_map as decoder_map
 import pydroneklv.encoders as encoders
-import pydroneklv.utils as utils
 
-from typing import List, TypedDict, Tuple, Any
+from typing import List, TypedDict, Any
 from collections import namedtuple
-from functools import reduce
 
 TestField = namedtuple('TestField', 'tag len bytes value')
 
@@ -17,40 +15,42 @@ class TestPacketPayload(TypedDict):
     bytes: bytes
 
 
+def mk_field(tag: int, tag_type: decoder_map.PacketTypeData) -> TestField:
+    value_bytes = bytes.fromhex(tag_type.example_input_output_values[0])
+    f = TestField(tag=tag,
+                  len=len(value_bytes),
+                  bytes=encoders.encode_field(tag, value_bytes),
+                  value=tag_type.example_input_output_values[1])
+    return f
+
+
+def mk_packet(payload: TestPacketPayload, ukey: bytes = decoder_map.UNIVERSAL_KEY) \
+        -> bytes:
+    # build length field for entire payload
+    packet_len = encoders.encode_length(len(payload['bytes']) + 4)   # checksum field is 4 bytes
+
+    packet_bytes = ukey + packet_len + payload['bytes']
+
+    packet_bytes += encoders.mk_crc_field(packet_bytes)
+    return packet_bytes
+
+
+def mk_payload() -> TestPacketPayload:
+    payload = []
+    for tag, tag_type in decoder_map.klv_types_data.items():
+        if tag_type.example_input_output_values is None:
+            continue
+        payload.append(mk_field(tag, tag_type))
+    payload_bytes = b''.join([f.bytes for f in payload])
+    return {'fields': payload, 'bytes': payload_bytes}
+
+
 class TestPacket:
     def __init__(self):
-        payload: TestPacketPayload = self.mk_payload()
+        payload: TestPacketPayload = mk_payload()
         self.payload_fields = payload['fields']
         self.payload_bytes = payload['bytes']
-        self.pkt_bytes: bytes = self.mk_packet(payload)
-
-    def mk_field(self, tag: int, tag_type: decoder_map.PacketTypeData) -> TestField:
-        value_bytes = bytes.fromhex(tag_type.example_input_output_values[0])
-        f = TestField(tag=tag,
-                      len=len(value_bytes),
-                      bytes=encoders.encode_field(tag, value_bytes),
-                      value=tag_type.example_input_output_values[1])
-        return f
-
-    def mk_payload(self) -> TestPacketPayload:
-        payload = []
-        for tag, tag_type in decoder_map.klv_types_data.items():
-            if tag_type.example_input_output_values is None:
-                continue
-            payload.append(self.mk_field(tag, tag_type))
-        payload_bytes = b''.join([f.bytes for f in payload])
-        return {'fields': payload, 'bytes': payload_bytes}
-
-    @staticmethod
-    def mk_packet(payload: TestPacketPayload, ukey: bytes = decoder_map.UNIVERSAL_KEY) \
-            -> bytes:
-        # build length field for entire payload
-        packet_len = encoders.encode_length(len(payload['bytes']) + 4)   # checksum field is 4 bytes
-
-        packet_bytes = ukey + packet_len + payload['bytes']
-
-        packet_bytes += encoders.mk_crc_field(packet_bytes)
-        return packet_bytes
+        self.pkt_bytes: bytes = mk_packet(payload)
 
 
 def compare_klv_values(tag: int, v1: Any, v2: Any) -> bool:
@@ -84,4 +84,3 @@ class MyTestCase(unittest.TestCase):
                 decoded_val = self.decoded[f.tag].value
                 self.assertTrue(compare_klv_values(f.tag, f.value, decoded_val),
                                 f'tag {f.tag} {f.value} =/= {decoded_val}')
-

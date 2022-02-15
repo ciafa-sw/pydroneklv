@@ -50,10 +50,12 @@ class MyTestCase(unittest.TestCase):
             if packet_type_data.exact_input_size is not None:
                 with self.subTest(f"tag {tag} | {packet_type_data.description} | small input byte array",
                                   packet_type_data=packet_type_data):
-                    self.assertRaises(Exception, packet_type_data.decode_func, b'd' * (packet_type_data.exact_input_size - 1))
+                    self.assertRaises(Exception,
+                                      packet_type_data.decode_func, b'd' * (packet_type_data.exact_input_size - 1))
                 with self.subTest(f"tag {tag} | {packet_type_data.description} | big input byte array",
                                   packet_type_data=packet_type_data):
-                    self.assertRaises(Exception, packet_type_data.decode_func, b'd' * (packet_type_data.exact_input_size + 1))
+                    self.assertRaises(Exception,
+                                      packet_type_data.decode_func, b'd' * (packet_type_data.exact_input_size + 1))
 
     def test_decoder_example(self):
         for tag, packet_type_data in klv_types_data.items():
