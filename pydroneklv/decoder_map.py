@@ -77,7 +77,7 @@ def add_klv_type(tag: int,
 
 add_klv_type(2, "UNIX Time Stamp", decodeTimeStamp,
              # standard documentation says this byte list corresponds to  2008/10/24 00:13:29.913
-             example_input_output_values=('00 04 56 F4 A6 AA 4A A8', datetime.datetime(2008, 9, 15, 20, 57, 55, 29672)),
+             example_input_output_values=('00 04 56 F4 A6 AA 4A A8', datetime.datetime(2008, 9, 15, 19, 57, 55, 29672)),
              exact_input_size=8)
 
 add_klv_type(3, "Mission ID", max_input_size=127)

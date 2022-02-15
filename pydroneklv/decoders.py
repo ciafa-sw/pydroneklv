@@ -26,7 +26,7 @@ def decodeTimeStamp(buf):
                     return new Date(unix_timestamp / 1000); // Convert from microseconds to milliseconds, and return
     """
     uint64 = decode_timestamp_seconds(buf)
-    dt = datetime.datetime.fromtimestamp(uint64 / 1e6)  # convert µs to seconds (*1e-6)
+    dt = datetime.datetime.utcfromtimestamp(uint64 / 1e6)  # convert µs to seconds (*1e-6)
     return dt
 
 
